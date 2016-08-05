@@ -24,11 +24,25 @@ import (
 	"fmt"
 	"os"
 
+	log "github.com/Sirupsen/logrus"
+	"github.com/sabakaio/k8s-updater/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/kubernetes/pkg/api"
+	client "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 var cfgFile string
+var logLevel string
+
+// Kubernetes API host
+var kHost string
+
+// Kubernetes API client
+var k *client.Client
+
+// Default namespace for Kubernetes API resources
+var namespace string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -43,6 +57,7 @@ to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
+		update()
 	},
 }
 
@@ -56,16 +71,12 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports Persistent Flags, which, if defined here,
-	// will be global for your application.
+	cobra.OnInitialize(initConfig, initLogging, initClient)
 
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.k8s-updater.yaml)")
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	RootCmd.PersistentFlags().StringVarP(&logLevel, "loglevel", "l", log.DebugLevel.String(), "Log level")
+	RootCmd.PersistentFlags().StringVarP(&kHost, "host", "H", "", "Kubernetes host to connect to")
+	RootCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", api.NamespaceDefault, "Kubernetes namespace")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -81,5 +92,23 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	}
+}
+
+func initLogging() {
+	level, err := log.ParseLevel(logLevel)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.SetLevel(level)
+	log.Debugln("Loglevel set to", log.GetLevel().String())
+}
+
+// Create Kubernetes API client for given host. Shared for all subcommands
+func initClient() {
+	var err error
+	k, err = util.CreateClient(kHost)
+	if err != nil {
+		log.Fatalln("Can't connect to Kubernetes API:", err)
 	}
 }

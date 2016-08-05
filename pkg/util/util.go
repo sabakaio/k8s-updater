@@ -26,7 +26,6 @@ import (
 	"k8s.io/kubernetes/pkg/client/restclient"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/labels"
-	"k8s.io/kubernetes/pkg/watch"
 )
 
 // CreateClient creates a client for Kubernetes cluster

@@ -4,3 +4,11 @@ import:
 - package: k8s.io/kubernetes
   subpackages:
   - pkg
+- package: github.com/Sirupsen/logrus
+  version: v0.10.0
+- package: github.com/smartystreets/goconvey
+  version: 1.6.2
+  subpackages:
+  - convey
+- package: github.com/blang/semver
+  version: v3.3.0
