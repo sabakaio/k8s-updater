@@ -258,7 +258,7 @@ imports:
   - urlfetch
   - internal/urlfetch
 - name: google.golang.org/cloud
-  version: ""
+  version: eb47ba841d53d93506cfbfbc03927daf9cc48f88
   subpackages:
   - compute/metadata
   - internal
@@ -272,6 +272,7 @@ imports:
   - pkg
   - pkg/api
   - pkg/apis/batch
+  - pkg/apis/extensions/v1beta1
   - pkg/client/restclient
   - pkg/client/unversioned
   - pkg/labels
@@ -290,8 +291,11 @@ imports:
   - pkg/util/intstr
   - pkg/util/rand
   - pkg/util/sets
-  - pkg/api/errors
   - pkg/api/v1
+  - pkg/apis/autoscaling
+  - pkg/apis/extensions
+  - pkg/watch/versioned
+  - pkg/api/errors
   - pkg/api/validation
   - pkg/client/metrics
   - pkg/client/transport
@@ -301,19 +305,16 @@ imports:
   - pkg/util/flowcontrol
   - pkg/util/net
   - pkg/version
-  - pkg/watch/versioned
   - pkg/api/install
   - pkg/apimachinery/registered
   - pkg/apis/apps
   - pkg/apis/apps/install
   - pkg/apis/authentication.k8s.io/install
   - pkg/apis/authorization/install
-  - pkg/apis/autoscaling
   - pkg/apis/autoscaling/install
   - pkg/apis/batch/install
   - pkg/apis/batch/v2alpha1
   - pkg/apis/componentconfig/install
-  - pkg/apis/extensions
   - pkg/apis/extensions/install
   - pkg/apis/policy
   - pkg/apis/policy/install
@@ -332,8 +333,8 @@ imports:
   - pkg/runtime/serializer/protobuf
   - pkg/runtime/serializer/recognizer
   - pkg/runtime/serializer/versioning
-  - pkg/util/validation/field
   - pkg/util/parsers
+  - pkg/util/validation/field
   - pkg/api/endpoints
   - pkg/api/pod
   - pkg/api/service
@@ -352,7 +353,6 @@ imports:
   - pkg/apis/batch/v1
   - pkg/apis/componentconfig
   - pkg/apis/componentconfig/v1alpha1
-  - pkg/apis/extensions/v1beta1
   - pkg/apis/policy/v1alpha1
   - pkg/apis/rbac/v1alpha1
   - plugin/pkg/client/auth/gcp

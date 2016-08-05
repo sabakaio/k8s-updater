@@ -23,10 +23,10 @@ package util
 import (
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/apis/batch"
+	ext "k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/client/restclient"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/labels"
-	"k8s.io/kubernetes/pkg/watch"
 )
 
 // CreateClient creates a client for Kubernetes cluster
@@ -74,6 +74,21 @@ func ListJobs(k *client.Client, namespace string) (jobs *batch.JobList, err erro
 	opts := api.ListOptions{}
 	opts.LabelSelector = kronSelector
 	jobs, err = k.Batch().Jobs(namespace).List(opts)
+
+	return
+}
+
+// ListDeployments finds all Deployment templates with the "autoupdate" label
+func ListDeployments(k *client.Client, namespace string) (deployments *ext.DeploymentList, err error) {
+	selector, err := labels.Parse("autoupdate")
+	if err != nil {
+		return
+	}
+
+	opts := api.ListOptions{
+		LabelSelector: selector,
+	}
+	deployments, err = k.Deployments(namespace).List(opts)
 
 	return
 }
