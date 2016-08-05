@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/sabakaio/k8s-updater/pkg/updater"
 )
@@ -16,8 +17,10 @@ func update() {
 	for _, c := range list.Items {
 		version, err := c.ParseImageVersion()
 		if err != nil {
-			log.Warningln("Could not parse container image version", err)
+			msg := fmt.Sprintf("could not parse container image version for '%s'", c.GetName())
+			log.Warningln(msg, err)
+		} else {
+			log.Debugln(c.GetName(), version.String())
 		}
-		log.Debugln(c.GetName(), version)
 	}
 }

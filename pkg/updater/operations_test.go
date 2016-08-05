@@ -16,5 +16,27 @@ func TestContainer(t *testing.T) {
 	}
 	Convey("Test Container type", t, func() {
 		So(container.GetName(), ShouldEqual, "my-container")
+
+		Convey("Test image semver", func() {
+			version, err := container.ParseImageVersion()
+			So(err, ShouldBeNil)
+			So(version.Major, ShouldEqual, 1)
+			So(version.Minor, ShouldEqual, 2)
+			So(version.Patch, ShouldEqual, 3)
+
+			container.container.Image = "registry.example.com/my-image:latest"
+			version, err = container.ParseImageVersion()
+			So(err, ShouldNotBeNil)
+			So(version.Major, ShouldEqual, 0)
+			So(version.Minor, ShouldEqual, 0)
+			So(version.Patch, ShouldEqual, 0)
+
+			container.container.Image = "registry.example.com/my-image"
+			version, err = container.ParseImageVersion()
+			So(err, ShouldNotBeNil)
+			So(version.Major, ShouldEqual, 0)
+			So(version.Minor, ShouldEqual, 0)
+			So(version.Patch, ShouldEqual, 0)
+		})
 	})
 }

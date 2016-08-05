@@ -1,9 +1,12 @@
 package updater
 
 import (
+	"fmt"
+	"github.com/blang/semver"
 	"k8s.io/kubernetes/pkg/api"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/labels"
+	"strings"
 )
 
 // GetName return container name
@@ -12,9 +15,13 @@ func (c *Container) GetName() string {
 }
 
 // ParseImageVersion return semver of current container image
-func (c *Container) ParseImageVersion() (version string, err error) {
-	version = c.container.Image
-	return
+func (c *Container) ParseImageVersion() (semver.Version, error) {
+	image := strings.Split(c.container.Image, ":")
+	if len(image) != 2 {
+		return semver.Version{}, fmt.Errorf(
+			"invalid image name, could not extract version: %s", c.container.Image)
+	}
+	return semver.ParseTolerant(image[1])
 }
 
 // NewList list containers to check for updates
