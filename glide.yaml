@@ -4,3 +4,5 @@ import:
 - package: k8s.io/kubernetes
   subpackages:
   - pkg
+- package: github.com/Sirupsen/logrus
+  version: v0.10.0

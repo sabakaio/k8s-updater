@@ -1,5 +1,5 @@
-hash: 44d7284dafdd3c1d714fba2ae910e191a1c019f2101a7a291345b38387d174e6
-updated: 2016-08-05T12:39:21.708936885+03:00
+hash: facfea415e54fea0b6c0fdeb5db5c0ecd1b9c027cdc75657f4a8c0c00c8a37a9
+updated: 2016-08-05T16:02:06.548986781+03:00
 imports:
 - name: github.com/beorn7/perks
   version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
@@ -204,6 +204,8 @@ imports:
   - model
 - name: github.com/prometheus/procfs
   version: 490cc6eb5fa45bf8a8b7b73c8bc82a8160e8531d
+- name: github.com/Sirupsen/logrus
+  version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
 - name: github.com/spf13/cast
   version: e31f36ffc91a2ba9ddb72a4b6a607ff9b3d3cb63
 - name: github.com/spf13/cobra
