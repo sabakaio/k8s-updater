@@ -1,0 +1,6 @@
+package: github.com/sabakaio/k8s-updater
+import:
+- package: github.com/spf13/cobra
+- package: k8s.io/kubernetes
+  subpackages:
+  - pkg
