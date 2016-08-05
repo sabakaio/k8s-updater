@@ -25,12 +25,24 @@ import (
 	"os"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/sabakaio/k8s-updater/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/kubernetes/pkg/api"
+	client "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 var cfgFile string
 var logLevel string
+
+// Kubernetes API host
+var kHost string
+
+// Kubernetes API client
+var k *client.Client
+
+// Default namespace for Kubernetes API resources
+var namespace string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -58,10 +70,12 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig, initLogging)
+	cobra.OnInitialize(initConfig, initLogging, initClient)
 
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.k8s-updater.yaml)")
 	RootCmd.PersistentFlags().StringVarP(&logLevel, "loglevel", "l", log.DebugLevel.String(), "Log level")
+	RootCmd.PersistentFlags().StringVarP(&kHost, "host", "H", "", "Kubernetes host to connect to")
+	RootCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", api.NamespaceDefault, "Kubernetes namespace")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -87,4 +101,13 @@ func initLogging() {
 	}
 	log.SetLevel(level)
 	log.Debugln("Loglevel set to", log.GetLevel().String())
+}
+
+// Create Kubernetes API client for given host. Shared for all subcommands
+func initClient() {
+	var err error
+	k, err = util.CreateClient(kHost)
+	if err != nil {
+		log.Fatalln("Can't connect to Kubernetes API:", err)
+	}
 }
