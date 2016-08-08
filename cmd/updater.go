@@ -19,8 +19,11 @@ func update() {
 		if err != nil {
 			msg := fmt.Sprintf("could not parse container image version for '%s'", c.GetName())
 			log.Warningln(msg, err)
-		} else {
-			log.Debugln(c.GetName(), version.String())
 		}
+		latest, err := c.GetLatestVersion()
+		if err != nil {
+			log.Error(err)
+		}
+		log.Debugln(c.GetName(), version.String(), "=>", latest.String())
 	}
 }

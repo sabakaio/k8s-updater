@@ -2,16 +2,23 @@ package updater
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/blang/semver"
+	"github.com/sabakaio/k8s-updater/pkg/registry"
 	"k8s.io/kubernetes/pkg/api"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/labels"
 	"strings"
 )
 
-// GetName return container name
+// GetName returns the container name
 func (c *Container) GetName() string {
 	return c.container.Name
+}
+
+// GetImageName returns the container image name
+func (c *Container) GetImageName() string {
+	return c.container.Image
 }
 
 // ParseImageVersion return semver of current container image
@@ -26,18 +33,16 @@ func (c *Container) ParseImageVersion() (semver.Version, error) {
 
 // GetLatestVersion returns a latest image version from repository
 func (c *Container) GetLatestVersion() (semver.Version, error) {
-	// TODO read image version from repo
-	// Return a stub to provide a protocol for other developers
-	return semver.Make("100.0.0")
+	return c.repository.GetLatestVersion()
 }
 
 // NewList list containers to check for updates
 func NewList(k *client.Client, namespace string) (containers *ContainerList, err error) {
+	// List all deployments lebled with `autoupdate`
 	selector, err := labels.Parse("autoupdate")
 	if err != nil {
 		return
 	}
-
 	opts := api.ListOptions{
 		LabelSelector: selector,
 	}
@@ -45,13 +50,39 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 	if err != nil {
 		return
 	}
+
+	// Iterate over the list of deployments to get a list of containers
 	containers = new(ContainerList)
 	for _, d := range deployments.Items {
+		// Get deployment spec registries
+		registries, e := registry.GetRegistries(k, &d)
+		if e != nil {
+			err = e
+			return
+		}
+		// Iterate over pod containers to get update targets
 		for _, c := range d.Spec.Template.Spec.Containers {
 			var container = &Container{
 				container:  &c,
 				deployment: &d,
 			}
+			image := container.GetImageName()
+			// Choose a registry for container by the name
+			for _, r := range registries.Items {
+				if strings.HasPrefix(image, r.Name+"/") {
+					container.repository = registry.NewRepository(image, r)
+					break
+				}
+			}
+			if container.repository == nil {
+				if defaultRegistry, err := registries.Get("default"); err == nil {
+					container.repository = registry.NewRepository(image, defaultRegistry)
+				} else {
+					log.Errorf("container '%s' of deployment '%s' has no private registry configured", c.Name, d.Name)
+					continue
+				}
+			}
+			log.Debugf("container '%s' of deployment '%s' uses '%s' repository", c.Name, d.Name, container.repository.Name)
 			containers.Items = append(containers.Items, container)
 		}
 	}

@@ -1,17 +1,19 @@
 package updater
 
 import (
+	"github.com/sabakaio/k8s-updater/pkg/registry"
 	"k8s.io/kubernetes/pkg/api"
 	ext "k8s.io/kubernetes/pkg/apis/extensions"
 )
 
-// Container hold a container to check for version update linked with `Deployment`
+// Container holds a container to check for version update linked with `Deployment`
 type Container struct {
 	container  *api.Container
 	deployment *ext.Deployment
+	repository *registry.Repository
 }
 
-// List of `Container`s to check for version update
+// ContainerList is a list of containers to check for version update
 type ContainerList struct {
 	Items []*Container
 }
