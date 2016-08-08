@@ -10,7 +10,7 @@ import (
 type Container struct {
 	container  *api.Container
 	deployment *ext.Deployment
-	registry   *registry.Registry
+	repository *registry.Repository
 }
 
 // ContainerList is a list of containers to check for version update

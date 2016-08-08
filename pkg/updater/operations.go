@@ -18,8 +18,7 @@ func (c *Container) GetName() string {
 
 // GetImageName returns the container image name
 func (c *Container) GetImageName() string {
-	image := strings.Split(c.container.Image, ":")
-	return image[0]
+	return c.container.Image
 }
 
 // ParseImageVersion return semver of current container image
@@ -34,8 +33,7 @@ func (c *Container) ParseImageVersion() (semver.Version, error) {
 
 // GetLatestVersion returns a latest image version from repository
 func (c *Container) GetLatestVersion() (semver.Version, error) {
-	image := strings.Split(c.container.Image, ":")
-	return c.registry.GetLatestVersion(image[0])
+	return c.repository.GetLatestVersion()
 }
 
 // NewList list containers to check for updates
@@ -68,22 +66,23 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 				container:  &c,
 				deployment: &d,
 			}
+			image := container.GetImageName()
 			// Choose a registry for container by the name
 			for _, r := range registries.Items {
-				if strings.HasPrefix(container.GetImageName(), r.Name+"/") {
-					container.registry = r
+				if strings.HasPrefix(image, r.Name+"/") {
+					container.repository = registry.NewRepository(image, r)
 					break
 				}
 			}
-			if container.registry == nil {
-				if defaultRegistry, err := registries.Get("default"); err != nil {
-					container.registry = defaultRegistry
+			if container.repository == nil {
+				if defaultRegistry, err := registries.Get("default"); err == nil {
+					container.repository = registry.NewRepository(image, defaultRegistry)
 				} else {
-					log.Error("container '%s' of deployment '%s' has no private registry configured", c.Name, d.Name)
+					log.Errorf("container '%s' of deployment '%s' has no private registry configured", c.Name, d.Name)
 					continue
 				}
 			}
-			log.Debugf("container '%s' of deployment '%s' uses '%s' registry", c.Name, d.Name, container.registry.Name)
+			log.Debugf("container '%s' of deployment '%s' uses '%s' repository", c.Name, d.Name, container.repository.Name)
 			containers.Items = append(containers.Items, container)
 		}
 	}
