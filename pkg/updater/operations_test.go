@@ -1,8 +1,11 @@
 package updater
 
 import (
+	"github.com/blang/semver"
+	"github.com/sabakaio/k8s-updater/pkg/util"
 	. "github.com/smartystreets/goconvey/convey"
 	"k8s.io/kubernetes/pkg/api"
+	ext "k8s.io/kubernetes/pkg/apis/extensions"
 	"testing"
 )
 
@@ -11,8 +14,11 @@ func TestContainer(t *testing.T) {
 		Name:  "my-container",
 		Image: "registry.example.com/my-image:1.2.3",
 	}
+	k8sDeployment := ext.Deployment{}
+	k8sDeployment.Spec.Template.Spec.Containers = append(k8sDeployment.Spec.Template.Spec.Containers, k8sContainer)
 	container := Container{
-		container: &k8sContainer,
+		container:  &k8sContainer,
+		deployment: &k8sDeployment,
 	}
 	Convey("Test Container type", t, func() {
 		So(container.GetName(), ShouldEqual, "my-container")
@@ -38,5 +44,37 @@ func TestContainer(t *testing.T) {
 			So(version.Minor, ShouldEqual, 0)
 			So(version.Patch, ShouldEqual, 0)
 		})
+
+		Convey("Test update version", func() {
+			container.container.Image = "registry.example.com/my-image:1.2.3"
+
+			newVersion, err := semver.Make("1.6.6")
+			So(err, ShouldBeNil)
+
+			newContainer, err := container.UpdateImageVersion(newVersion)
+			So(err, ShouldBeNil)
+			So(
+				newContainer.deployment.Spec.Template.Spec.Containers[0].Image,
+				ShouldEqual,
+				"registry.example.com/my-image:1.6.6")
+		})
 	})
 }
+
+// Uncomment for some integration testing
+
+// func TestKube(t *testing.T) {
+// Convey("Test update deployment", t, func() {
+// k, err := util.CreateClient("http://localhost:8001")
+// So(err, ShouldBeNil)
+
+// list, err := NewList(k, api.NamespaceDefault)
+// So(err, ShouldBeNil)
+
+// ver, err := semver.Make("1.2.3")
+// So(err, ShouldBeNil)
+
+// err = list.Items[0].UpdateDeployment(k, api.NamespaceDefault, ver)
+// So(err, ShouldBeNil)
+// })
+// }

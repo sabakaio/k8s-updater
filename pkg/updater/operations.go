@@ -31,6 +31,19 @@ func (c *Container) ParseImageVersion() (semver.Version, error) {
 	return semver.ParseTolerant(image[1])
 }
 
+// UpdateImageVersion updates Deployment template with the set version. It does nto save the deployment.
+func (c *Container) UpdateImageVersion(v semver.Version) (*Container, error) {
+	image := strings.Split(c.container.Image, ":")
+	if len(image) != 2 {
+		return c, fmt.Errorf(
+			"invalid image name, could not extract version: %s", c.container.Image)
+	}
+	stringVersion := v.String()
+	imageString := strings.Join([]string{image[0], stringVersion}, ":")
+	c.deployment.Spec.Template.Spec.Containers[c.containerKey].Image = imageString
+	return c, nil
+}
+
 // GetLatestVersion returns a latest image version from repository
 func (c *Container) GetLatestVersion() (semver.Version, error) {
 	return c.repository.GetLatestVersion()
@@ -63,8 +76,9 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 		// Iterate over pod containers to get update targets
 		for _, c := range d.Spec.Template.Spec.Containers {
 			var container = &Container{
-				container:  &c,
-				deployment: &d,
+				container:    &c,
+				deployment:   &d,
+				containerKey: i,
 			}
 			image := container.GetImageName()
 			// Choose a registry for container by the name
@@ -88,4 +102,21 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 	}
 
 	return
+}
+
+func (c *Container) UpdateDeployment(k *client.Client, namespace string, v semver.Version) error {
+	newContainer, err := c.UpdateImageVersion(v)
+	if err != nil {
+		return err
+	}
+
+	newDeployment, err := k.Deployments(namespace).Update(newContainer.deployment)
+	fmt.Println(newDeployment.GetName())
+	// TODO: what to do with the new deployment? Update our memory store?
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
