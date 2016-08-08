@@ -1,0 +1,40 @@
+language: go
+sudo: required
+
+go:
+  - 1.6
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/gopath/src/github.com/sabakaio/k8s-updater/vendor
+    - $HOME/gopath/vendor
+
+install:
+  - mkdir -p $GOPATH/bin
+  - curl https://glide.sh/get | sh
+  - glide install
+
+script:
+  - CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo
+  - make test
+  - docker build -t sabaka/k8s-updater .
+  - >
+    if [ -n "$TRAVIS_TAG" ]; then
+      docker tag sabaka/k8s-updater "sabaka/k8s-updater:$TRAVIS_TAG"
+    fi
+
+after_success:
+  - docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+  - >
+    if [ "$TRAVIS_BRANCH" == "master" ]; then
+    docker push sabaka/k8s-updater;
+    fi
+  - >
+    if [ -n "$TRAVIS_TAG" ]; then
+    docker push "sabaka/k8s-updater:$TRAVIS_TAG"
+    fi
+
+
