@@ -3,6 +3,7 @@ package updater
 import (
 	"fmt"
 	"github.com/blang/semver"
+	"github.com/sabakaio/k8s-updater/pkg/registry"
 	"k8s.io/kubernetes/pkg/api"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/labels"
@@ -24,11 +25,19 @@ func (c *Container) ParseImageVersion() (semver.Version, error) {
 	return semver.ParseTolerant(image[1])
 }
 
+// GetDockerRegistry returns the container image registry
+func (c *Container) GetDockerRegistry() (*registry.Registry, error) {
+	return registry.NewRegistry(c.deployment)
+}
+
 // GetLatestVersion returns a latest image version from repository
 func (c *Container) GetLatestVersion() (semver.Version, error) {
-	// TODO read image version from repo
-	// Return a stub to provide a protocol for other developers
-	return semver.Make("100.0.0")
+	image := strings.Split(c.container.Image, ":")
+	registry, err := c.GetDockerRegistry()
+	if err != nil {
+		return semver.Version{}, err
+	}
+	return registry.GetLatestVersion(image[0])
 }
 
 // NewList list containers to check for updates
