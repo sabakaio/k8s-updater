@@ -24,6 +24,13 @@ func (c *Container) ParseImageVersion() (semver.Version, error) {
 	return semver.ParseTolerant(image[1])
 }
 
+// GetLatestVersion returns a latest image version from repository
+func (c *Container) GetLatestVersion() (semver.Version, error) {
+	// TODO read image version from repo
+	// Return a stub to provide a protocol for other developers
+	return semver.Make("100.0.0")
+}
+
 // NewList list containers to check for updates
 func NewList(k *client.Client, namespace string) (containers *ContainerList, err error) {
 	selector, err := labels.Parse("autoupdate")
