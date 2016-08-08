@@ -2,7 +2,7 @@ package updater
 
 import (
 	"github.com/blang/semver"
-	"github.com/sabakaio/k8s-updater/pkg/util"
+	// "github.com/sabakaio/k8s-updater/pkg/util"
 	. "github.com/smartystreets/goconvey/convey"
 	"k8s.io/kubernetes/pkg/api"
 	ext "k8s.io/kubernetes/pkg/apis/extensions"
