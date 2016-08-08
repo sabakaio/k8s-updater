@@ -123,7 +123,7 @@ func NewRepository(image string, registry *Registry) *Repository {
 }
 
 // GetLatestVersion returns the latest image version based on tag
-func (r *Repository) GetLatestVersion() (version semver.Version, err error) {
+func (r *Repository) GetLatestVersion() (version *Version, err error) {
 	tags, err := r.Registry.GetTags(r.Name)
 	if err != nil {
 		return
@@ -132,10 +132,17 @@ func (r *Repository) GetLatestVersion() (version semver.Version, err error) {
 		err = fmt.Errorf("there is no image tags for '%s'", r.Name)
 	}
 	for _, tag := range tags {
-		v, e := semver.ParseTolerant(tag)
-		if e == nil && v.GT(version) {
+		v, e := NewVersion(tag)
+		if e == nil && (version == nil || v.Semver.GT(version.Semver)) {
 			version = v
 		}
 	}
+	return
+}
+
+// NewVersion return association for image tag and its semver
+func NewVersion(tag string) (version *Version, err error) {
+	v, err := semver.ParseTolerant(tag)
+	version = &Version{Tag: tag, Semver: v}
 	return
 }

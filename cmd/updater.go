@@ -24,6 +24,6 @@ func update() {
 		if err != nil {
 			log.Error(err)
 		}
-		log.Debugln(c.GetName(), version.String(), "=>", latest.String())
+		log.Debugln(c.GetName(), version.String(), "=>", latest.Semver.String())
 	}
 }
