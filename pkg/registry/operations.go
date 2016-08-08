@@ -60,7 +60,7 @@ func (r *Registry) GetTags(repo string) (tags []string, err error) {
 	return
 }
 
-// GetGetRegistries returns list of registries based on deployment's image pull secrets
+// GetRegistries returns list of registries based on deployment's image pull secrets
 func GetRegistries(k *client.Client, deployment *ext.Deployment) (registries *RegistryList, err error) {
 	registries = new(RegistryList)
 	for _, s := range deployment.Spec.Template.Spec.ImagePullSecrets {
