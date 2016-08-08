@@ -40,7 +40,7 @@ func (c *Container) UpdateImageVersion(v semver.Version) (*Container, error) {
 	}
 	stringVersion := v.String()
 	imageString := strings.Join([]string{image[0], stringVersion}, ":")
-	c.deployment.Spec.Template.Spec.Containers[c.containerKey].Image = imageString
+	c.container.Image = imageString
 	return c, nil
 }
 
@@ -76,9 +76,8 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 		// Iterate over pod containers to get update targets
 		for _, c := range d.Spec.Template.Spec.Containers {
 			var container = &Container{
-				container:    &c,
-				deployment:   &d,
-				containerKey: i,
+				container:  &c,
+				deployment: &d,
 			}
 			image := container.GetImageName()
 			// Choose a registry for container by the name

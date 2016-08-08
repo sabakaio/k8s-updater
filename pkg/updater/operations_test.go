@@ -53,10 +53,7 @@ func TestContainer(t *testing.T) {
 
 			newContainer, err := container.UpdateImageVersion(newVersion)
 			So(err, ShouldBeNil)
-			So(
-				newContainer.deployment.Spec.Template.Spec.Containers[0].Image,
-				ShouldEqual,
-				"registry.example.com/my-image:1.6.6")
+			So(newContainer.container.Image, ShouldEqual, "registry.example.com/my-image:1.6.6")
 		})
 	})
 }
