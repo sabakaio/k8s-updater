@@ -104,6 +104,7 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 	return
 }
 
+// UpdateDeployment updates Deployment version on the cluster
 func (c *Container) UpdateDeployment(k *client.Client, namespace string, v semver.Version) error {
 	newContainer, err := c.UpdateImageVersion(v)
 	if err != nil {
