@@ -20,8 +20,12 @@ func TestContainer(t *testing.T) {
 		container:  &k8sContainer,
 		deployment: &k8sDeployment,
 	}
-	Convey("Test Container type", t, func() {
-		So(container.GetName(), ShouldEqual, "my-container")
+
+	Convey("Test Container struct", t, func() {
+		Convey("Test names", func() {
+			So(container.GetName(), ShouldEqual, "my-container")
+			So(container.GetImageName(), ShouldEqual, "registry.example.com/my-image:1.2.3")
+		})
 
 		Convey("Test image version", func() {
 			version, err := container.GetImageVersion()
