@@ -45,7 +45,7 @@ func (c *Container) UpdateImageVersion(v semver.Version) (*Container, error) {
 }
 
 // GetLatestVersion returns a latest image version from repository
-func (c *Container) GetLatestVersion() (semver.Version, error) {
+func (c *Container) GetLatestVersion() (*registry.Version, error) {
 	return c.repository.GetLatestVersion()
 }
 
