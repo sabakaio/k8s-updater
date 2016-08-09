@@ -112,19 +112,15 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 }
 
 // UpdateDeployment updates Deployment version on the cluster
-func (c *Container) UpdateDeployment(k *client.Client, namespace string, v registry.Version) error {
+func (c *Container) UpdateDeployment(k *client.Client, v registry.Version) (err error) {
 	newContainer, err := c.SetImageVersion(v)
 	if err != nil {
 		return err
 	}
 
-	newDeployment, err := k.Deployments(namespace).Update(newContainer.deployment)
-	fmt.Println(newDeployment.GetName())
+	namespace := newContainer.deployment.Namespace
+	_, err = k.Deployments(namespace).Update(newContainer.deployment)
 	// TODO: what to do with the new deployment? Update our memory store?
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return
 }
