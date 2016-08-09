@@ -15,15 +15,15 @@ func update() {
 		log.Warningln("No autoupdate deployments found")
 	}
 	for _, c := range list.Items {
-		version, err := c.ParseImageVersion()
+		version, err := c.GetImageVersion()
 		if err != nil {
-			msg := fmt.Sprintf("could not parse container image version for '%s'", c.GetName())
+			msg := fmt.Sprintf("could not get container image version for '%s'", c.GetName())
 			log.Warningln(msg, err)
 		}
 		latest, err := c.GetLatestVersion()
 		if err != nil {
 			log.Error(err)
 		}
-		log.Debugln(c.GetName(), version.String(), "=>", latest.Semver.String())
+		log.Debugln(c.GetName(), version.Semver.String(), "=>", latest.Semver.String())
 	}
 }

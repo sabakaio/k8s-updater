@@ -23,26 +23,40 @@ func TestContainer(t *testing.T) {
 	Convey("Test Container type", t, func() {
 		So(container.GetName(), ShouldEqual, "my-container")
 
-		Convey("Test image semver", func() {
-			version, err := container.ParseImageVersion()
+		Convey("Test image version", func() {
+			version, err := container.GetImageVersion()
 			So(err, ShouldBeNil)
-			So(version.Major, ShouldEqual, 1)
-			So(version.Minor, ShouldEqual, 2)
-			So(version.Patch, ShouldEqual, 3)
+			So(version.Tag, ShouldEqual, "1.2.3")
+			So(version.Semver.Major, ShouldEqual, 1)
+			So(version.Semver.Minor, ShouldEqual, 2)
+			So(version.Semver.Patch, ShouldEqual, 3)
 
+			// `v` prefix for version is ok
+			container.container.Image = "registry.example.com/my-image:v2.3.4"
+			version, err = container.GetImageVersion()
+			So(err, ShouldBeNil)
+			So(version.Tag, ShouldEqual, "v2.3.4")
+			So(version.Semver.Major, ShouldEqual, 2)
+			So(version.Semver.Minor, ShouldEqual, 3)
+			So(version.Semver.Patch, ShouldEqual, 4)
+
+			// But `v.` prefix is not allowed
+			container.container.Image = "registry.example.com/my-image:v.3.4.5"
+			version, err = container.GetImageVersion()
+			So(err, ShouldNotBeNil)
+			So(version, ShouldBeNil)
+
+			// Could not parse non-semver, expect error
 			container.container.Image = "registry.example.com/my-image:latest"
-			version, err = container.ParseImageVersion()
+			version, err = container.GetImageVersion()
 			So(err, ShouldNotBeNil)
-			So(version.Major, ShouldEqual, 0)
-			So(version.Minor, ShouldEqual, 0)
-			So(version.Patch, ShouldEqual, 0)
+			So(version, ShouldBeNil)
 
+			// Expect error if not tag specified for image
 			container.container.Image = "registry.example.com/my-image"
-			version, err = container.ParseImageVersion()
+			version, err = container.GetImageVersion()
 			So(err, ShouldNotBeNil)
-			So(version.Major, ShouldEqual, 0)
-			So(version.Minor, ShouldEqual, 0)
-			So(version.Patch, ShouldEqual, 0)
+			So(version, ShouldBeNil)
 		})
 
 		Convey("Test update version", func() {

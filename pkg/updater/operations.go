@@ -21,14 +21,22 @@ func (c *Container) GetImageName() string {
 	return c.container.Image
 }
 
-// ParseImageVersion return semver of current container image
-func (c *Container) ParseImageVersion() (semver.Version, error) {
-	image := strings.Split(c.container.Image, ":")
+// GetImageVersion returns `registry.Version` for current container image
+func (c *Container) GetImageVersion() (version *registry.Version, err error) {
+	image := strings.SplitN(c.GetImageName(), ":", 2)
 	if len(image) != 2 {
-		return semver.Version{}, fmt.Errorf(
-			"invalid image name, could not extract version: %s", c.container.Image)
+		err = fmt.Errorf("invalid image name, could not extract version: %s", c.GetImageName())
+		return
 	}
-	return semver.ParseTolerant(image[1])
+	semver, err := semver.ParseTolerant(image[1])
+	if err != nil {
+		return
+	}
+	version = &registry.Version{
+		Tag:    image[1],
+		Semver: semver,
+	}
+	return
 }
 
 // UpdateImageVersion updates Deployment template with the set version. It does nto save the deployment.
