@@ -99,17 +99,32 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 			return
 		}
 
+		// Get deployment annotations to use as config for updater
+		annotations := d.GetAnnotations()
+
 		// Iterate over pod containers to get update targets
 		for _, c := range d.Spec.Template.Spec.Containers {
 			var container = &Container{
 				container:  &c,
 				deployment: &d,
 			}
+
 			if err := container.SetRepositoryFrom(registries); err != nil {
 				log.Errorln(err.Error())
 				continue
 			}
 			log.Debugf("container '%s' of deployment '%s' uses '%s' repository", c.Name, d.Name, container.repository.Name)
+
+			hook_key := "before_autoupdate_" + c.Name
+			hook_name, ok := annotations[hook_key]
+			if ok {
+				job, e := k.Batch().Jobs(d.Namespace).Get(hook_name)
+				if e == nil {
+					container.beforeUpdate = job
+					log.Debugf("before update hook for '%s' container: %s", c.Name, job.Name)
+				}
+			}
+
 			containers.Items = append(containers.Items, container)
 		}
 	}
