@@ -27,7 +27,7 @@ func update() {
 		// Update container deployment if greater image version found
 		if latest.Semver.GT(version.Semver) {
 			log.Debugln(c.GetName(), version.Semver.String(), "=>", latest.Semver.String())
-			c.UpdateDeployment(k, namespace, latest)
+			c.UpdateDeployment(k, namespace, *latest)
 		}
 	}
 }
