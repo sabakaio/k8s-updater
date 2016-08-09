@@ -146,3 +146,7 @@ func NewVersion(tag string) (version *Version, err error) {
 	version = &Version{Tag: tag, Semver: v}
 	return
 }
+
+func (v *Version) String() string {
+	return v.Tag
+}

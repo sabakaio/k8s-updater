@@ -11,6 +11,11 @@ import (
 	"strings"
 )
 
+// GetDeploymentName returns the deployment name
+func (c *Container) GetDeploymentName() string {
+	return c.deployment.Name
+}
+
 // GetName returns the container name
 func (c *Container) GetName() string {
 	return c.container.Name
@@ -43,12 +48,7 @@ func (c *Container) GetImageVersion() (version *registry.Version, err error) {
 // NOTE a version is passed by the value to avoid nil pointer errors
 func (c *Container) SetImageVersion(v registry.Version) (*Container, error) {
 	image := strings.SplitN(c.GetImageName(), ":", 2)
-	if len(image) != 2 {
-		return c, fmt.Errorf(
-			"invalid image name, could not extract version: %s", c.GetImageName())
-	}
-	imageString := strings.Join([]string{image[0], v.Tag}, ":")
-	c.container.Image = imageString
+	c.container.Image = image[0] + ":" + v.String()
 	return c, nil
 }
 

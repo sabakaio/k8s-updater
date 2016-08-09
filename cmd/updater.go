@@ -24,10 +24,14 @@ func update() {
 		if err != nil {
 			log.Error(err)
 		}
+		msg := fmt.Sprintf("'%s' container of '%s' cluster: current version is %s, latest is %s",
+			c.GetName(), c.GetDeploymentName(), version.String(), latest.String())
 		// Update container deployment if greater image version found
 		if latest.Semver.GT(version.Semver) {
-			log.Debugln(c.GetName(), version.Semver.String(), "=>", latest.Semver.String())
+			log.Infof("going to update %s", msg)
 			c.UpdateDeployment(k, namespace, *latest)
+		} else {
+			log.Debugf("nothing to update for %s", msg)
 		}
 	}
 }
