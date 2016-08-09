@@ -57,6 +57,23 @@ func (c *Container) GetLatestVersion() (*registry.Version, error) {
 	return c.repository.GetLatestVersion()
 }
 
+// SetRepositoryFrom iterate over registries list to match containers image repository
+func (c *Container) SetRepositoryFrom(registries *registry.RegistryList) error {
+	image := c.GetImageName()
+	// Choose a registry for container by the name
+	for _, r := range registries.Items {
+		if strings.HasPrefix(image, r.Name+"/") {
+			c.repository = registry.NewRepository(image, r)
+			return nil
+		}
+	}
+	if defaultRegistry, err := registries.Get("default"); err == nil {
+		c.repository = registry.NewRepository(image, defaultRegistry)
+		return nil
+	}
+	return fmt.Errorf("cannot match registry for container '%s'", c.GetName())
+}
+
 // NewList list containers to check for updates
 func NewList(k *client.Client, namespace string) (containers *ContainerList, err error) {
 	// List all deployments lebled with `autoupdate`
@@ -81,27 +98,16 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 			err = e
 			return
 		}
+
 		// Iterate over pod containers to get update targets
 		for _, c := range d.Spec.Template.Spec.Containers {
 			var container = &Container{
 				container:  &c,
 				deployment: &d,
 			}
-			image := container.GetImageName()
-			// Choose a registry for container by the name
-			for _, r := range registries.Items {
-				if strings.HasPrefix(image, r.Name+"/") {
-					container.repository = registry.NewRepository(image, r)
-					break
-				}
-			}
-			if container.repository == nil {
-				if defaultRegistry, err := registries.Get("default"); err == nil {
-					container.repository = registry.NewRepository(image, defaultRegistry)
-				} else {
-					log.Errorf("container '%s' of deployment '%s' has no private registry configured", c.Name, d.Name)
-					continue
-				}
+			if err := container.SetRepositoryFrom(registries); err != nil {
+				log.Errorln(err.Error())
+				continue
 			}
 			log.Debugf("container '%s' of deployment '%s' uses '%s' repository", c.Name, d.Name, container.repository.Name)
 			containers.Items = append(containers.Items, container)
