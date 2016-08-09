@@ -39,15 +39,15 @@ func (c *Container) GetImageVersion() (version *registry.Version, err error) {
 	return
 }
 
-// UpdateImageVersion updates Deployment template with the set version. It does nto save the deployment.
-func (c *Container) UpdateImageVersion(v semver.Version) (*Container, error) {
-	image := strings.Split(c.container.Image, ":")
+// SetImageVersion updates Deployment template with the set version. It does not save the deployment.
+// NOTE a version is passed by the value to avoid nil pointer errors
+func (c *Container) SetImageVersion(v registry.Version) (*Container, error) {
+	image := strings.SplitN(c.GetImageName(), ":", 2)
 	if len(image) != 2 {
 		return c, fmt.Errorf(
-			"invalid image name, could not extract version: %s", c.container.Image)
+			"invalid image name, could not extract version: %s", c.GetImageName())
 	}
-	stringVersion := v.String()
-	imageString := strings.Join([]string{image[0], stringVersion}, ":")
+	imageString := strings.Join([]string{image[0], v.Tag}, ":")
 	c.container.Image = imageString
 	return c, nil
 }
@@ -112,8 +112,8 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 }
 
 // UpdateDeployment updates Deployment version on the cluster
-func (c *Container) UpdateDeployment(k *client.Client, namespace string, v semver.Version) error {
-	newContainer, err := c.UpdateImageVersion(v)
+func (c *Container) UpdateDeployment(k *client.Client, namespace string, v registry.Version) error {
+	newContainer, err := c.SetImageVersion(v)
 	if err != nil {
 		return err
 	}

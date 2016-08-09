@@ -1,8 +1,8 @@
 package updater
 
 import (
-	"github.com/blang/semver"
 	// "github.com/sabakaio/k8s-updater/pkg/util"
+	"github.com/sabakaio/k8s-updater/pkg/registry"
 	. "github.com/smartystreets/goconvey/convey"
 	"k8s.io/kubernetes/pkg/api"
 	ext "k8s.io/kubernetes/pkg/apis/extensions"
@@ -66,10 +66,10 @@ func TestContainer(t *testing.T) {
 		Convey("Test update version", func() {
 			container.container.Image = "registry.example.com/my-image:1.2.3"
 
-			newVersion, err := semver.Make("1.6.6")
+			newVersion, err := registry.NewVersion("1.6.6")
 			So(err, ShouldBeNil)
 
-			newContainer, err := container.UpdateImageVersion(newVersion)
+			newContainer, err := container.SetImageVersion(*newVersion)
 			So(err, ShouldBeNil)
 			So(newContainer.container.Image, ShouldEqual, "registry.example.com/my-image:1.6.6")
 		})
