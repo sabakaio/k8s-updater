@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"github.com/blang/semver"
 	"net/http"
 )
 
@@ -33,4 +34,12 @@ type Repository struct {
 type TagsList struct {
 	Name string   `json:"name"`
 	Tags []string `json:"tags"`
+}
+
+// Image version with repository tag and semver representation. `Tag` shoulf be used
+// to get image by its tag. `Semver` is for version compare.
+// TODO make it consistent, changing one field should affect another
+type Version struct {
+	Tag    string
+	Semver semver.Version
 }

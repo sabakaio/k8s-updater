@@ -32,7 +32,7 @@ func (c *Container) ParseImageVersion() (semver.Version, error) {
 }
 
 // GetLatestVersion returns a latest image version from repository
-func (c *Container) GetLatestVersion() (semver.Version, error) {
+func (c *Container) GetLatestVersion() (*registry.Version, error) {
 	return c.repository.GetLatestVersion()
 }
 
