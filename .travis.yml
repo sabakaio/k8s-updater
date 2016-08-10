@@ -34,7 +34,7 @@ after_success:
     fi
   - >
     if [ -n "$TRAVIS_TAG" ]; then
-    docker push "sabaka/k8s-updater:$TRAVIS_TAG"
+    docker push "sabaka/k8s-updater:$TRAVIS_TAG";
     fi
 
 
