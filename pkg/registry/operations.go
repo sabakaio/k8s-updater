@@ -123,7 +123,7 @@ func NewRepository(image string, registry *Registry) *Repository {
 }
 
 // GetLatestVersion returns the latest image version based on tag
-func (r *Repository) GetLatestVersion() (version *Version, err error) {
+func (r *Repository) GetLatestVersion(filter semver.Range) (version *Version, err error) {
 	tags, err := r.Registry.GetTags(r.Name)
 	if err != nil {
 		return
@@ -133,7 +133,15 @@ func (r *Repository) GetLatestVersion() (version *Version, err error) {
 	}
 	for _, tag := range tags {
 		v, e := NewVersion(tag)
-		if e == nil && (version == nil || v.Semver.GT(version.Semver)) {
+		if e != nil {
+			continue
+		}
+		// Skip versions which are out of versions range filter
+		if filter != nil && !filter(v.Semver) {
+			continue
+		}
+		// Get greater version
+		if version == nil || v.Semver.GT(version.Semver) {
 			version = v
 		}
 	}

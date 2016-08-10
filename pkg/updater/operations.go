@@ -63,7 +63,21 @@ func (c *Container) SetImageVersion(v registry.Version) (*Container, error) {
 
 // GetLatestVersion returns a latest image version from repository
 func (c *Container) GetLatestVersion() (*registry.Version, error) {
-	return c.repository.GetLatestVersion()
+	var filter semver.Range
+	annotations := c.deployment.GetAnnotations()
+	filter_key := "autoupdate_version_range_" + c.GetName()
+	for k, v := range annotations {
+		if k == filter_key {
+			r, e := semver.ParseRange(v)
+			if e != nil {
+				log.Errorln(e)
+				break
+			}
+			filter = r
+			break
+		}
+	}
+	return c.repository.GetLatestVersion(filter)
 }
 
 // GetAutoupdateVersion returns version to perform autoupdate to.
