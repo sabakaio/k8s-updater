@@ -51,7 +51,13 @@ func (c *Container) GetImageVersion() (version *registry.Version, err error) {
 // NOTE a version is passed by the value to avoid nil pointer errors
 func (c *Container) SetImageVersion(v registry.Version) (*Container, error) {
 	image := strings.SplitN(c.GetImageName(), ":", 2)
-	c.container.Image = image[0] + ":" + v.String()
+	newImage := image[0] + ":" + v.String()
+	c.container.Image = newImage
+	for i, dc := range c.deployment.Spec.Template.Spec.Containers {
+		if dc.Name == c.GetName() {
+			c.deployment.Spec.Template.Spec.Containers[i].Image = newImage
+		}
+	}
 	return c, nil
 }
 
