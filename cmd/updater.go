@@ -15,15 +15,23 @@ func update() {
 		log.Warningln("No autoupdate deployments found")
 	}
 	for _, c := range list.Items {
-		version, err := c.ParseImageVersion()
+		version, err := c.GetImageVersion()
 		if err != nil {
-			msg := fmt.Sprintf("could not parse container image version for '%s'", c.GetName())
+			msg := fmt.Sprintf("could not get container image version for '%s'", c.GetName())
 			log.Warningln(msg, err)
 		}
 		latest, err := c.GetLatestVersion()
 		if err != nil {
 			log.Error(err)
 		}
-		log.Debugln(c.GetName(), version.String(), "=>", latest.Semver.String())
+		msg := fmt.Sprintf("'%s' container of '%s' cluster: current version is %s, latest is %s",
+			c.GetName(), c.GetDeploymentName(), version.String(), latest.String())
+		// Update container deployment if greater image version found
+		if latest.Semver.GT(version.Semver) {
+			log.Infof("going to update %s", msg)
+			c.UpdateDeployment(k, *latest)
+		} else {
+			log.Debugf("nothing to update for %s", msg)
+		}
 	}
 }
