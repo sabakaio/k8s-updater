@@ -5,10 +5,13 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/blang/semver"
 	"github.com/sabakaio/k8s-updater/pkg/registry"
+	"github.com/sabakaio/k8s-updater/pkg/util"
 	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/apis/batch"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/labels"
 	"strings"
+	"time"
 )
 
 // GetDeploymentName returns the deployment name
@@ -134,14 +137,84 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 
 // UpdateDeployment updates Deployment version on the cluster
 func (c *Container) UpdateDeployment(k *client.Client, v registry.Version) (err error) {
+	namespace := c.deployment.Namespace
+
+	// Update image version for container
 	newContainer, err := c.SetImageVersion(v)
 	if err != nil {
 		return err
 	}
 
-	namespace := newContainer.deployment.Namespace
+	// Perform preupdate hook if exists
+	hook := newContainer.GetBeforeUpdateJob()
+	if hook != nil {
+		// Create a job by hook spec
+		createdJob, e := k.Batch().Jobs(namespace).Create(hook)
+		if e != nil {
+			err = e
+			return
+		}
+		job_name := createdJob.GetName()
+		log.Debugln("before update hook job created with name", job_name)
+
+		// Defer job delete
+		defer func() {
+			if e := util.DeletePodsInJob(k, createdJob); e != nil {
+				log.Errorf("could not delete pods related to job: %s", e.Error())
+			}
+			deleteOptions := &api.DeleteOptions{}
+			if e := k.Batch().Jobs(namespace).Delete(job_name, deleteOptions); e != nil {
+				log.Errorf("could not cleanup job: %s", e.Error())
+			} else {
+				log.Debugf("job %s deleted", job_name)
+			}
+		}()
+
+		// Wait the job to complete
+		for {
+			runningJob, e := k.Batch().Jobs(namespace).Get(job_name)
+			if e != nil {
+				err = e
+				return
+			}
+			if runningJob.Status.Failed > 0 {
+				err = fmt.Errorf("job %s failed")
+				return
+			}
+			if runningJob.Status.Succeeded > 0 {
+				break
+			}
+			time.Sleep(time.Second * 3)
+		}
+	}
+	return
+
 	_, err = k.Deployments(namespace).Update(newContainer.deployment)
 	// TODO: what to do with the new deployment? Update our memory store?
+
+	return
+}
+
+// GetBeforeUpdateJob returns configuration for a job to run before deployment update.
+// It copies the original job and fix it's container image version.
+func (c *Container) GetBeforeUpdateJob() (job *batch.Job) {
+	if c.beforeUpdate == nil {
+		return
+	}
+	hook := c.beforeUpdate
+
+	job = &batch.Job{}
+	job.Spec.Template.Spec = hook.Spec.Template.Spec
+	for i, jobContainer := range job.Spec.Template.Spec.Containers {
+		jobImage := strings.SplitN(jobContainer.Image, ":", 2)[0]
+		if strings.HasPrefix(c.GetImageName(), jobImage+":") {
+			job.Spec.Template.Spec.Containers[i].Image = c.GetImageName()
+			log.Debugln("update job container image to", c.GetImageName())
+		}
+	}
+
+	genName := c.GetName() + "-" + hook.GetName() + "-"
+	job.ObjectMeta.SetGenerateName(genName)
 
 	return
 }

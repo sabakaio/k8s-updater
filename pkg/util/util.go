@@ -21,6 +21,7 @@
 package util
 
 import (
+	"fmt"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/apis/batch"
 	"k8s.io/kubernetes/pkg/client/restclient"
@@ -47,32 +48,31 @@ func CreateClient(host string) (k *client.Client, err error) {
 	return
 }
 
-// CopyJob creates a copy of k8s batch Job
-func CopyJob(job *batch.Job) *batch.Job {
-	copy := batch.Job{}
-	copy.Spec.Template.Spec = job.Spec.Template.Spec
+// DeletePodsInJob deletes all Pods which were created for a Job
+func DeletePodsInJob(k *client.Client, job *batch.Job) (err error) {
+	namespace := job.Namespace
+	deleteOpts := api.DeleteOptions{}
+	listOpts := api.ListOptions{}
+	uid := job.GetObjectMeta().GetUID()
+	label := "controller-uid=" + fmt.Sprintf("%s", uid)
 
-	genName := "kron-" + job.GetName() + "-"
-
-	copy.ObjectMeta.SetGenerateName(genName)
-	copy.ObjectMeta.SetLabels(map[string]string{
-		"origin":   "kron",
-		"template": job.GetName(),
-	})
-
-	return &copy
-}
-
-// ListJobs finds all job templates
-func ListJobs(k *client.Client, namespace string) (jobs *batch.JobList, err error) {
-	kronSelector, err := labels.Parse("update=true")
+	selector, err := labels.Parse(label)
 	if err != nil {
 		return
 	}
 
-	opts := api.ListOptions{}
-	opts.LabelSelector = kronSelector
-	jobs, err = k.Batch().Jobs(namespace).List(opts)
+	listOpts.LabelSelector = selector
+	pods, err := k.Pods(namespace).List(listOpts)
+	if err != nil {
+		return
+	}
+
+	for _, pod := range pods.Items {
+		if e := k.Pods(namespace).Delete(pod.GetName(), &deleteOpts); e != nil {
+			err = e
+			return
+		}
+	}
 
 	return
 }
