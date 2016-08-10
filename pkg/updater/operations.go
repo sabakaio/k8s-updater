@@ -66,6 +66,24 @@ func (c *Container) GetLatestVersion() (*registry.Version, error) {
 	return c.repository.GetLatestVersion()
 }
 
+// GetAutoupdateVersion returns version to perform autoupdate to.
+// nil will be returned if notheng to update.
+func (c *Container) GetAutoupdateVersion() (version *registry.Version, err error) {
+	current, err := c.GetImageVersion()
+	if err != nil {
+		return
+	}
+	latest, err := c.GetLatestVersion()
+	if err != nil {
+		return
+	}
+	// Update container deployment if greater image version found
+	if latest.Semver.GT(current.Semver) {
+		version = latest
+	}
+	return
+}
+
 // SetRepositoryFrom iterate over registries list to match containers image repository
 func (c *Container) SetRepositoryFrom(registries *registry.RegistryList) error {
 	image := c.GetImageName()
