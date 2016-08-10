@@ -193,7 +193,6 @@ func (c *Container) UpdateDeployment(k *client.Client, v registry.Version) (err 
 			time.Sleep(time.Second * 3)
 		}
 	}
-	return
 
 	_, err = k.Deployments(namespace).Update(newContainer.deployment)
 	// TODO: what to do with the new deployment? Update our memory store?
