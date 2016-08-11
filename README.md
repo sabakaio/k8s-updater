@@ -29,3 +29,27 @@ spec:
           name: autoupdater
       restartPolicy: Never # Important for containers that should run just once (by schedule)
 ```
+
+Updater is going to list all *Deployments* labled with `autoupdate` to perform version check and updates
+
+```yaml
+metadata:
+  labels:
+    autoupdate: "true"
+```
+
+To perform some pre-update actions (e.g. run database migrations) you can setup a hook for each container with *Deployment* annotations
+
+```yaml
+metadata:
+  annotations:
+    before_autoupdate_web: "migration" # The job to run before autoupdate container `web`
+```
+
+You could also limit a versions range to to updrade on, with *Deployment* annotations
+
+```yaml
+metadata:
+  annotations:
+    autoupdate_version_range_web: ">1.0.0 <2.0.0"
+```
