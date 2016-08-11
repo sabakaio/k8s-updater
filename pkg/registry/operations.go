@@ -41,7 +41,9 @@ func (r *Registry) Get(pathTemplate string, args ...interface{}) (response *http
 // GetTags returns list of tags for the image repository
 func (r *Registry) GetTags(repo string) (tags []string, err error) {
 	res, err := r.Get("/v2/%s/tags/list", repo)
-	defer res.Body.Close()
+	if res != nil {
+		defer res.Body.Close()
+	}
 
 	if err != nil {
 		return
