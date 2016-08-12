@@ -33,27 +33,14 @@ import (
 )
 
 var cfgFile string
-var logLevel string
-
-// Kubernetes API host
-var kHost string
 
 // Kubernetes API client
 var k *client.Client
 
-// Default namespace for Kubernetes API resources
-var namespace string
-
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "k8s-updater",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Kubernetes cluster containers autoupdater",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
@@ -74,9 +61,12 @@ func init() {
 	cobra.OnInitialize(initConfig, initLogging, initClient)
 
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.k8s-updater.yaml)")
-	RootCmd.PersistentFlags().StringVarP(&logLevel, "loglevel", "l", log.DebugLevel.String(), "Log level")
-	RootCmd.PersistentFlags().StringVarP(&kHost, "host", "H", "", "Kubernetes host to connect to")
-	RootCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", api.NamespaceDefault, "Kubernetes namespace")
+	RootCmd.PersistentFlags().StringP("loglevel", "l", log.DebugLevel.String(), "Log level")
+	RootCmd.PersistentFlags().StringP("host", "H", "", "Kubernetes host to connect to")
+	RootCmd.PersistentFlags().StringP("namespace", "n", api.NamespaceDefault, "Kubernetes namespace")
+	viper.BindPFlag("loglevel", RootCmd.PersistentFlags().Lookup("loglevel"))
+	viper.BindPFlag("host", RootCmd.PersistentFlags().Lookup("host"))
+	viper.BindPFlag("namespace", RootCmd.PersistentFlags().Lookup("namespace"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -87,7 +77,8 @@ func initConfig() {
 
 	viper.SetConfigName(".k8s-updater") // name of config file (without extension)
 	viper.AddConfigPath("$HOME")        // adding home directory as first search path
-	viper.AutomaticEnv()                // read in environment variables that match
+	viper.SetEnvPrefix("APP")
+	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
@@ -96,7 +87,7 @@ func initConfig() {
 }
 
 func initLogging() {
-	level, err := log.ParseLevel(logLevel)
+	level, err := log.ParseLevel(viper.GetString("loglevel"))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -107,7 +98,7 @@ func initLogging() {
 // Create Kubernetes API client for given host. Shared for all subcommands
 func initClient() {
 	var err error
-	k, err = util.CreateClient(kHost)
+	k, err = util.CreateClient(viper.GetString("host"))
 	if err != nil {
 		log.Fatalln("Can't connect to Kubernetes API:", err)
 	}

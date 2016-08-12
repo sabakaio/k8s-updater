@@ -3,10 +3,11 @@ package cmd
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/sabakaio/k8s-updater/pkg/updater"
+	"github.com/spf13/viper"
 )
 
 func update() {
-	list, err := updater.NewList(k, namespace)
+	list, err := updater.NewList(k, viper.GetString("namespace"))
 	if err != nil {
 		log.Fatalln("Can't get deployments", err)
 	}
