@@ -17,8 +17,8 @@ func TestContainer(t *testing.T) {
 	k8sDeployment := ext.Deployment{}
 	k8sDeployment.Spec.Template.Spec.Containers = append(k8sDeployment.Spec.Template.Spec.Containers, k8sContainer)
 	container := Container{
-		container:  &k8sContainer,
-		deployment: &k8sDeployment,
+		container:  k8sContainer,
+		deployment: k8sDeployment,
 	}
 
 	Convey("Test Container struct", t, func() {

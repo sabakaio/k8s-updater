@@ -9,8 +9,8 @@ import (
 
 // Container holds a container to check for version update linked with `Deployment`
 type Container struct {
-	container    *api.Container
-	deployment   *ext.Deployment
+	container    api.Container
+	deployment   ext.Deployment
 	repository   *registry.Repository
 	beforeUpdate *batch.Job
 }

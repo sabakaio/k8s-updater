@@ -146,15 +146,16 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 		// Iterate over pod containers to get update targets
 		for _, c := range d.Spec.Template.Spec.Containers {
 			var container = &Container{
-				container:  &c,
-				deployment: &d,
+				container:  c,
+				deployment: d,
 			}
 
 			if err := container.SetRepositoryFrom(registries); err != nil {
 				log.Errorln(err.Error())
 				continue
 			}
-			log.Debugf("container '%s' of deployment '%s' uses '%s' repository", c.Name, d.Name, container.repository.Name)
+			log.Debugf("deployment=%s container=%s use '%s' repository",
+				container.GetDeploymentName(), container.GetName(), container.repository.Name)
 
 			hook_key := "before_autoupdate_" + c.Name
 			hook_name, ok := annotations[hook_key]
@@ -162,7 +163,8 @@ func NewList(k *client.Client, namespace string) (containers *ContainerList, err
 				job, e := k.Batch().Jobs(d.Namespace).Get(hook_name)
 				if e == nil {
 					container.beforeUpdate = job
-					log.Debugf("before update hook for '%s' container: %s", c.Name, job.Name)
+					log.Debugf("deployment=%s container=%s before update hook: %s",
+						container.GetDeploymentName(), container.GetName(), job.Name)
 				}
 			}
 
@@ -226,7 +228,7 @@ func (c *Container) UpdateDeployment(k *client.Client, v registry.Version) (err 
 		}
 	}
 
-	_, err = k.Deployments(namespace).Update(newContainer.deployment)
+	_, err = k.Deployments(namespace).Update(&newContainer.deployment)
 	// TODO: what to do with the new deployment? Update our memory store?
 
 	return
