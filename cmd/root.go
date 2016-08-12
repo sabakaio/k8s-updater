@@ -64,9 +64,11 @@ func init() {
 	RootCmd.PersistentFlags().StringP("loglevel", "l", log.DebugLevel.String(), "Log level")
 	RootCmd.PersistentFlags().StringP("host", "H", "", "Kubernetes host to connect to")
 	RootCmd.PersistentFlags().StringP("namespace", "n", api.NamespaceDefault, "Kubernetes namespace")
+	RootCmd.PersistentFlags().Bool("dry-run", false, "Get versions but do not update")
 	viper.BindPFlag("loglevel", RootCmd.PersistentFlags().Lookup("loglevel"))
 	viper.BindPFlag("host", RootCmd.PersistentFlags().Lookup("host"))
 	viper.BindPFlag("namespace", RootCmd.PersistentFlags().Lookup("namespace"))
+	viper.BindPFlag("dryrun", RootCmd.PersistentFlags().Lookup("dry-run"))
 }
 
 // initConfig reads in config file and ENV variables if set.
